@@ -1,0 +1,99 @@
+@isTest
+public class DelegateApproversTest {
+    public static String CRON_EXP = '0 0 0 15 3 ? 2042';
+    
+    public static void TestDataFactory(Datetime startTime, Datetime endTime, Boolean active, Boolean timeout) {
+        Profile p = [SELECT Id FROM Profile WHERE Name='Standard User'];
+        
+        List<User> users = new List<User>();
+        User delegator = new User(FirstName = 'Berke', LastName = 'Bakkaloğlu', Username = 'bbakkaloglu@petrofer.com.tr');
+        delegator.Email = 'berke.bakkaloglu@petrofer.com.tr';
+        delegator.Alias = 'bbakk';
+        delegator.TimeZoneSidKey = 'Europe/Istanbul';
+        delegator.LocaleSidKey = 'en_US';
+        delegator.EmailEncodingKey = 'UTF-8';
+        delegator.ProfileId = p.Id;
+        delegator.LanguageLocaleKey='en_US';
+        
+        User delegatee = new User(FirstName = 'Alper', LastName = 'Sayar', Username = 'asayar@petrofer.com.tr');
+        delegatee.Email = 'alper.sayar@petrofer.com.tr';
+        delegatee.Alias = 'asayar';
+        delegatee.TimeZoneSidKey = 'Europe/Istanbul';
+        delegatee.LocaleSidKey = 'en_US';
+        delegatee.EmailEncodingKey = 'UTF-8';
+        delegatee.ProfileId = p.Id;
+        delegatee.LanguageLocaleKey='en_US';
+        
+        users.add(delegator);
+        users.add(delegatee);
+        
+        insert users;
+        
+        Approval_Delegation__c ad = new Approval_Delegation__c();
+        ad.Delegator__c = delegator.Id;
+        ad.Delegatee__c = delegatee.Id;
+        ad.Start_Time__c = startTime;
+        ad.End_Time__c = endTime;
+        ad.Active__c = active;
+        
+        insert ad;
+    }
+    
+    @isTest
+    static void testNonactiveDelegation() {
+        TestDataFactory(Datetime.now(), Datetime.now().addDays(30), False, False);
+        
+        Test.startTest();
+        System.schedule('ScheduledApexTest', CRON_EXP, new DelegateApprovers());
+        Test.stopTest();
+        
+        User delegator = [SELECT Id, Username, DelegatedApproverId FROM User WHERE Username = 'bbakkaloglu@petrofer.com.tr' LIMIT 1];
+        User delegatee = [SELECT Id, Username, DelegatedApproverId FROM User WHERE Username = 'asayar@petrofer.com.tr' LIMIT 1];
+        
+        Approval_Delegation__c ad = 
+            [SELECT Delegator__c, Delegatee__c, Start_Time__c, End_Time__c, Active__c, Timeout__c 
+             FROM Approval_Delegation__c 
+             WHERE Timeout__c = False LIMIT 1];
+        
+        System.assertEquals(delegatee.Id, delegator.DelegatedApproverId, 'DelegatedApprovedId: ' + delegator.DelegatedApproverId);
+        System.assertEquals(True, ad.Active__c, 'Active__c: ' + ad.Active__c);
+    }
+    
+    @isTest
+    static void testActiveDelegation() {
+        TestDataFactory(Datetime.now().addDays(-30), Datetime.now(), True, False);
+        
+        Test.startTest();
+        System.schedule('ScheduledApexTest', CRON_EXP, new DelegateApprovers());
+        Test.stopTest();
+        
+        User delegator = [SELECT Id, Username, DelegatedApproverId FROM User WHERE Username = 'bbakkaloglu@petrofer.com.tr' LIMIT 1];
+        User delegatee = [SELECT Id, Username, DelegatedApproverId FROM User WHERE Username = 'asayar@petrofer.com.tr' LIMIT 1];
+        
+        Approval_Delegation__c ad = 
+            [SELECT Delegator__c, Delegatee__c, Start_Time__c, End_Time__c, Active__c, Timeout__c 
+             FROM Approval_Delegation__c 
+             WHERE Timeout__c = False LIMIT 1];
+        
+        System.assertEquals(null, delegator.DelegatedApproverId, 'DelegatedApprovedId: ' + delegator.DelegatedApproverId);
+        System.assertEquals(False, ad.Active__c, 'Active__c: ' + ad.Active__c);
+    }
+    
+    @isTest
+    static void testTimeoutDelegation() {
+        TestDataFactory(Datetime.now().addDays(-70), Datetime.now().addDays(-40), False, False);
+        
+        Test.startTest();
+        System.schedule('ScheduledApexTest', CRON_EXP, new DelegateApprovers());
+        Test.stopTest();
+        
+        Approval_Delegation__c ad = 
+            [SELECT Delegator__c, Delegatee__c, Start_Time__c, End_Time__c, Active__c, Timeout__c 
+             FROM Approval_Delegation__c LIMIT 1];
+        
+        Long timeDiffDays = (Datetime.now().getTime() - ad.End_Time__c.getTime())/1000/60/60/24;
+        
+        System.assertEquals(True, ad.Timeout__c, 'Timeout__c' + ad.Timeout__c);
+        System.assertEquals(True, timeDiffDays > 30, 'Time Diff: ' + timeDiffDays);
+    }
+}
