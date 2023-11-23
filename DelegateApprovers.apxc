@@ -1,0 +1,39 @@
+public class DelegateApprovers implements Schedulable {
+    static final Integer TIMEOUT_THRESHOLD = 30;
+    
+    public void execute(SchedulableContext ctx) {
+        List<Approval_Delegation__c> approvalDelegations = 
+            [SELECT Delegator__c, Delegator__r.Username, Delegatee__c, Delegatee__r.Username, Start_Time__c, End_Time__c, Active__c, Timeout__c 
+             FROM Approval_Delegation__c 
+             WHERE Timeout__c = False];
+        
+        if(!approvalDelegations.isEmpty() && approvalDelegations != null) {
+            Map<String, User> userMap = new Map<String, User>();
+            
+            for (Approval_Delegation__c ad : approvalDelegations) {
+                userMap.put(ad.Delegator__r.Username, ad.Delegator__r);
+                userMap.put(ad.Delegatee__r.Username, ad.Delegatee__r);
+            }
+            
+            for (Approval_Delegation__c ad : approvalDelegations) {
+                if (ad.Active__c) {
+                    if (ad.Start_Time__c < Datetime.now() && ad.End_Time__c <= Datetime.now()) {
+                        ad.Delegator__r.DelegatedApproverId = null;
+                        ad.Active__c = False;
+                    }
+                } else {
+                    if (ad.Start_Time__c <= Datetime.now() && ad.End_Time__c > Datetime.now()) {
+                        ad.Delegator__r.DelegatedApproverId = ad.Delegatee__c;
+                        ad.Active__c = True;
+                    }
+                }
+                if (ad.End_Time__c.addDays(TIMEOUT_THRESHOLD) < Datetime.now()) {
+                    ad.Timeout__c = True;
+                }
+            }
+            
+            update approvalDelegations;
+            update userMap.values();
+        }
+    }
+}
