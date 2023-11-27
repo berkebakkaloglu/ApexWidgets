@@ -1,5 +1,5 @@
 public class DelegateApprovers implements Schedulable {
-    static final Integer TIMEOUT_THRESHOLD = 30;
+    static final Integer TIMEOUT_THRESHOLD = 7;
     
     public void execute(SchedulableContext ctx) {
         List<Approval_Delegation__c> approvalDelegations = 
@@ -7,12 +7,12 @@ public class DelegateApprovers implements Schedulable {
              FROM Approval_Delegation__c 
              WHERE Timeout__c = False];
         
-        if(!approvalDelegations.isEmpty() && approvalDelegations != null) {
-            Map<String, User> userMap = new Map<String, User>();
+        if(!approvalDelegations.isEmpty() && approvalDelegations != null) {          
+            List<User> delegationUsers = new List<User>();
             
             for (Approval_Delegation__c ad : approvalDelegations) {
-                userMap.put(ad.Delegator__r.Username, ad.Delegator__r);
-                userMap.put(ad.Delegatee__r.Username, ad.Delegatee__r);
+                delegationUsers.add(ad.Delegator__r);
+                delegationUsers.add(ad.Delegatee__r);
             }
             
             for (Approval_Delegation__c ad : approvalDelegations) {
@@ -33,7 +33,7 @@ public class DelegateApprovers implements Schedulable {
             }
             
             update approvalDelegations;
-            update userMap.values();
+            update delegationUsers;
         }
     }
 }
