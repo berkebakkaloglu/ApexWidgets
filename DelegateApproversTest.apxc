@@ -80,7 +80,7 @@ public class DelegateApproversTest {
     }
     
     @isTest
-    static void testTimeoutDelegation() {
+    static void testTimeoutDelegationSuccess() {
         TestDataFactory(Datetime.now().addDays(-70), Datetime.now().addDays(-40), False, False);
         
         Test.startTest();
@@ -94,6 +94,24 @@ public class DelegateApproversTest {
         Long timeDiffDays = (Datetime.now().getTime() - ad.End_Time__c.getTime())/1000/60/60/24;
         
         System.assertEquals(True, ad.Timeout__c, 'Timeout__c' + ad.Timeout__c);
-        System.assertEquals(True, timeDiffDays > 30, 'Time Diff: ' + timeDiffDays);
+        System.assertEquals(True, timeDiffDays > 7, 'Time Diff: ' + timeDiffDays);
+    }
+    
+    @isTest
+    static void testTimeoutDelegationFailure() {
+        TestDataFactory(Datetime.now().addDays(-10), Datetime.now().addDays(-2), False, False);
+        
+        Test.startTest();
+        System.schedule('ScheduledApexTest', CRON_EXP, new DelegateApprovers());
+        Test.stopTest();
+        
+        Approval_Delegation__c ad = 
+            [SELECT Delegator__c, Delegatee__c, Start_Time__c, End_Time__c, Active__c, Timeout__c 
+             FROM Approval_Delegation__c LIMIT 1];
+        
+        Long timeDiffDays = (Datetime.now().getTime() - ad.End_Time__c.getTime())/1000/60/60/24;
+        
+        System.assertEquals(False, ad.Timeout__c, 'Timeout__c' + ad.Timeout__c);
+        System.assertEquals(True, timeDiffDays < 7, 'Time Diff: ' + timeDiffDays);
     }
 }
