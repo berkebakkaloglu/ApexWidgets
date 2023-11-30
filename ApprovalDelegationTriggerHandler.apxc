@@ -1,0 +1,25 @@
+public class ApprovalDelegationTriggerHandler {
+    public static void setApprovedDelegators(Map<Id, Approval_Delegation__c> oldMap, Map<Id, Approval_Delegation__c> newMap) {
+        Map<Id, Id> delegatorToDelegateeMap = new Map<Id, Id>();
+        
+        for (Approval_Delegation__c ad : newMap.values()) {
+            Approval_Delegation__c oldAppDel = oldMap.get(ad.Id);
+            Approval_Delegation__c newAppDel = newMap.get(ad.Id);
+            // Active False -> True
+            if (!oldAppDel.Active__c && newAppDel.Active__c) {
+                delegatorToDelegateeMap.put(ad.Delegator__c, ad.Delegatee__c);
+                // Active True -> False    
+            } else if (oldAppDel.Active__c && !newAppDel.Active__c) {
+                delegatorToDelegateeMap.put(ad.Delegator__c, null);
+            }
+        }
+        
+        List<User> delegationUsers = [SELECT Id, DelegatedApproverId FROM User WHERE Id IN: delegatorToDelegateeMap.keySet()];
+        
+        for (User user : delegationUsers) {
+            user.DelegatedApproverId = delegatorToDelegateeMap.get(user.Id);
+        }
+        
+        update delegationUsers;
+    }
+}
