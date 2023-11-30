@@ -1,0 +1,3 @@
+trigger ApprovalDelegationTrigger on Approval_Delegation__c (after update) {
+    ApprovalDelegationTriggerHandler.setApprovedDelegators(Trigger.oldMap, Trigger.newMap);
+}
