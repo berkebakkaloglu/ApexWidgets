@@ -1,4 +1,4 @@
-public class DelegateApprovers implements Schedulable {
+public class DelegateApproversSchedule implements Schedulable {
     static final Integer TIMEOUT_THRESHOLD = 7;
     
     public void execute(SchedulableContext ctx) {
