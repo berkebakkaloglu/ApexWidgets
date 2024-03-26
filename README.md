@@ -1,6 +1,6 @@
 # ApexWidgets
-## DelegateApprovers
-DelegateApprovers uses a custom sObject to schedule specific time periods to delegate Approval Processes from one User to another.
+## DelegateApproversSchedule
+DelegateApproversSchedule uses a custom sObject to schedule specific time periods to delegate Approval Processes from one User to another.
 
 The sObject is called Approval_Delegation__c with the following custom fields:
   * Delegator__c -> Lookup(User): The user who will be delegating their approval processes
