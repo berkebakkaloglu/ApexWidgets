@@ -1,5 +1,5 @@
 @isTest
-public class DelegateApproversTest {
+public class DelegateApproversScheduleScheduleTest {
     public static String CRON_EXP = '0 0 0 15 3 ? 2042';
     
     public static void TestDataFactory(Datetime startTime, Datetime endTime, Boolean active, Boolean timeout) {
@@ -44,7 +44,7 @@ public class DelegateApproversTest {
         TestDataFactory(Datetime.now(), Datetime.now().addDays(30), False, False);
         
         Test.startTest();
-        System.schedule('ScheduledApexTest', CRON_EXP, new DelegateApprovers());
+        System.schedule('ScheduledApexTest', CRON_EXP, new DelegateApproversSchedule());
         Test.stopTest();
         
         User delegator = [SELECT Id, Username, DelegatedApproverId FROM User WHERE Username = 'bbakkaloglu@petrofer.com.tr' LIMIT 1];
@@ -64,7 +64,7 @@ public class DelegateApproversTest {
         TestDataFactory(Datetime.now().addDays(-30), Datetime.now(), True, False);
         
         Test.startTest();
-        System.schedule('ScheduledApexTest', CRON_EXP, new DelegateApprovers());
+        System.schedule('ScheduledApexTest', CRON_EXP, new DelegateApproversSchedule());
         Test.stopTest();
         
         User delegator = [SELECT Id, Username, DelegatedApproverId FROM User WHERE Username = 'bbakkaloglu@petrofer.com.tr' LIMIT 1];
@@ -84,7 +84,7 @@ public class DelegateApproversTest {
         TestDataFactory(Datetime.now().addDays(-70), Datetime.now().addDays(-40), False, False);
         
         Test.startTest();
-        System.schedule('ScheduledApexTest', CRON_EXP, new DelegateApprovers());
+        System.schedule('ScheduledApexTest', CRON_EXP, new DelegateApproversSchedule());
         Test.stopTest();
         
         Approval_Delegation__c ad = 
@@ -102,7 +102,7 @@ public class DelegateApproversTest {
         TestDataFactory(Datetime.now().addDays(-10), Datetime.now().addDays(-2), False, False);
         
         Test.startTest();
-        System.schedule('ScheduledApexTest', CRON_EXP, new DelegateApprovers());
+        System.schedule('ScheduledApexTest', CRON_EXP, new DelegateApproversSchedule());
         Test.stopTest();
         
         Approval_Delegation__c ad = 
